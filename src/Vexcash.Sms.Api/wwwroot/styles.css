@@ -198,7 +198,8 @@ h2 {
   padding-top: 42px;
 }
 .customer-panel label,
-.template-editor label {
+.template-editor label,
+.customer-editor label {
   display: block;
   font-size: 0.76rem;
   font-weight: 800;
@@ -208,6 +209,53 @@ h2 {
 }
 .customer-panel label:first-of-type {
   margin-top: 0;
+}
+.customer-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.7fr) minmax(560px, 1.3fr);
+  gap: 34px;
+  padding-top: 40px;
+  align-items: start;
+  min-width: 0;
+}
+.customer-directory {
+  min-width: 0;
+}
+.customer-editor {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 30px 34px;
+}
+.customer-editor h2,
+.customer-directory h2 {
+  margin-bottom: 0;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 32px;
+}
+.section-heading span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+.table-wrap.customer-table-wrap {
+  margin-top: 18px;
+}
+.customer-table {
+  min-width: 720px;
+}
+.customer-table td:nth-child(4),
+.customer-table td:nth-child(5) {
+  font-variant-numeric: tabular-nums;
 }
 select,
 input,
@@ -479,7 +527,8 @@ td {
     align-items: start;
   }
   .composer,
-  .template-layout {
+  .template-layout,
+  .customer-layout {
     grid-template-columns: 1fr;
     gap: 34px;
   }
@@ -491,6 +540,9 @@ td {
     overflow: auto;
   }
   .template-editor {
+    padding: 24px;
+  }
+  .customer-editor {
     padding: 24px;
   }
   .send-row {
@@ -534,6 +586,10 @@ td {
   }
   .form-actions .primary-button {
     width: 100%;
+  }
+  .field-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 }
 @media (max-width: 850px) {
@@ -671,6 +727,9 @@ h1 {
   .preview-panel {
     padding: 20px;
   }
+  .customer-editor {
+    padding: 20px;
+  }
   .message-paper {
     padding: 22px 18px;
   }
@@ -728,8 +787,9 @@ h1 {
   }
 }
 @media (max-width: 1100px) {
-  .template-layout {
-    grid-template-columns: 1fr;
+  .template-layout,
+  .customer-layout {
+    grid-template-columns: minmax(0, 1fr);
   }
   .template-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));

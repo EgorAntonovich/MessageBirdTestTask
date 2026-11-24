@@ -7,7 +7,7 @@ public sealed class Customer
     public Customer(string phoneNumber, string name, string creditNumber, decimal amount, DateOnly dueDate)
     {
         Id = Guid.NewGuid();
-        PhoneNumber = Required(phoneNumber, 32);
+        PhoneNumber = E164Phone(phoneNumber);
         Name = Required(name, 160);
         CreditNumber = Required(creditNumber, 64);
         SetPayment(amount, dueDate);
@@ -32,6 +32,14 @@ public sealed class Customer
     {
         var normalized = value.Trim();
         if (normalized.Length is 0 || normalized.Length > maxLength) throw new ArgumentException("Value is required and must fit the configured length.");
+        return normalized;
+    }
+
+    private static string E164Phone(string value)
+    {
+        var normalized = Required(value, 32);
+        if (normalized.Length is < 9 or > 16 || normalized[0] != '+' || normalized[1] == '0' || normalized[1..].Any(character => !char.IsAsciiDigit(character)))
+            throw new ArgumentException("Phone number must use international E.164 format, for example +491701234567.", nameof(value));
         return normalized;
     }
 }

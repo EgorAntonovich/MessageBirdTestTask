@@ -10,7 +10,7 @@ A small .NET 10 application for sending one customer SMS at a time through Messa
 - direct MessageBird SMS REST integration through `HttpClient`
 - immutable message text and raw provider response stored for every attempt
 - Swagger UI and OpenAPI JSON
-- responsive UI for sending, editing templates, and reviewing history
+- responsive UI for creating customers, sending messages, editing templates, and reviewing history
 - mock provider mode for safe local testing
 - Docker, Docker Compose, Railway configuration, and health checks
 
@@ -34,6 +34,22 @@ Open:
 Local Compose runs in mock mode, so clicking **Send message** does not contact MessageBird. PostgreSQL is exposed on host port `5433` to avoid colliding with common local installations.
 
 ## Send through the API
+
+Create a customer who can receive messages:
+
+```bash
+curl -X POST http://localhost:8080/api/customers \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "phoneNumber": "+491701234567",
+    "name": "Test Customer",
+    "creditNumber": "TEST-10001",
+    "amount": 125.50,
+    "dueDate": "2026-12-15"
+  }'
+```
+
+Phone numbers must use international E.164 format and credit numbers must be unique.
 
 Preview without sending:
 
@@ -177,10 +193,11 @@ https://<your-domain>/
 Then:
 
 1. Confirm the UI displays **Mock mode** or **Live provider ready**, matching your configuration.
-2. Open **Templates** and create a custom template.
-3. Return to **Send message** and preview it.
-4. In mock mode, send it and confirm that it appears in **History**.
-5. When ready for a real SMS, set `MessageBird__UseMock=false`, confirm the access key and originator, and redeploy.
+2. Open **Customers** and create a customer with a unique credit number and an E.164 phone number such as `+491701234567`.
+3. Open **Templates** and create a custom template.
+4. Return to **Send message** and preview it.
+5. In mock mode, send it and confirm that it appears in **History**.
+6. When ready for a real SMS, set `MessageBird__UseMock=false`, confirm the access key and originator, and redeploy.
 
 If the application service is connected to GitHub autodeploys, later pushes to the selected branch trigger a new build automatically.
 

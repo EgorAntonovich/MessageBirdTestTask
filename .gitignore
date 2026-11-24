@@ -1,0 +1,11 @@
+bin/
+obj/
+.idea/
+.vs/
+.vscode/
+.DS_Store
+.env
+.impeccable/
+work/
+outputs/
+PRODUCT.md

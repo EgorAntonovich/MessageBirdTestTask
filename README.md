@@ -1,1 +1,144 @@
-# MessageBirdTestTask
+# Vexcash SMS
+
+A small .NET 10 application for sending one customer SMS at a time through MessageBird. The same workflow is available through a minimal web UI and a documented REST API.
+
+## What is included
+
+- ASP.NET Core REST API with controllers and RFC 9457 Problem Details
+- Entity Framework Core 10 with PostgreSQL and a checked-in `InitialCreate` migration
+- normalized `customers`, `message_templates`, and `sms_messages` tables
+- direct MessageBird SMS REST integration through `HttpClient`
+- immutable message text and raw provider response stored for every attempt
+- Swagger UI and OpenAPI JSON
+- responsive UI for sending, editing templates, and reviewing history
+- mock provider mode for safe local testing
+- Docker, Docker Compose, Railway configuration, and health checks
+
+The MessageBird adapter follows the official SMS endpoint: `POST https://rest.messagebird.com/messages` with `Authorization: AccessKey …`, `originator`, `body`, and `recipients`.
+
+## Run locally
+
+Docker is the only prerequisite:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+- UI: <http://localhost:8080>
+- Swagger UI: <http://localhost:8080/swagger>
+- OpenAPI: <http://localhost:8080/swagger/v1/swagger.json>
+- health: <http://localhost:8080/health>
+
+Local Compose runs in mock mode, so clicking **Send message** does not contact MessageBird. PostgreSQL is exposed on host port `5433` to avoid colliding with common local installations.
+
+## Send through the API
+
+Preview without sending:
+
+```bash
+curl -X POST http://localhost:8080/api/messages/preview \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "creditNumber": "VC-10482",
+    "templateId": "20000000-0000-0000-0000-000000000001"
+  }'
+```
+
+Send and persist the provider response:
+
+```bash
+curl -X POST http://localhost:8080/api/messages \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "creditNumber": "VC-10482",
+    "templateId": "20000000-0000-0000-0000-000000000001"
+  }'
+```
+
+Read history for one credit:
+
+```bash
+curl 'http://localhost:8080/api/messages?creditNumber=VC-10482'
+```
+
+## Message templates
+
+The migration seeds three editable templates:
+
+- Payment reminder
+- Payment demand
+- Contract termination
+
+Supported placeholders are `{CreditNumber}`, `{Name}`, `{Amount}`, and `{DueDate}`. Unknown placeholders are rejected when a template is created or updated.
+
+## Railway deployment
+
+1. Push the repository to GitHub and create a Railway project from it.
+2. Add a Railway PostgreSQL service.
+3. In the application service, set these variables:
+
+```text
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+MessageBird__AccessKey=<your MessageBird access key>
+MessageBird__Originator=Vexcash
+MessageBird__UseMock=false
+```
+
+4. Deploy. Railway uses `railway.json` and the root `Dockerfile`.
+5. Open `/health` first, then `/swagger` and `/`.
+
+`Database.MigrateAsync()` runs on startup, so the schema is created or upgraded automatically. Keep only one replica during migrations for this test assignment. A production multi-replica system should run migrations as a separate release step.
+
+For a safe reviewer demo that must not send real SMS, set `MessageBird__UseMock=true` and omit the access key.
+
+## Configuration
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | on Railway | PostgreSQL URL supplied by Railway |
+| `ConnectionStrings__Postgres` | alternative | standard Npgsql connection string |
+| `MessageBird__AccessKey` | real sends | MessageBird API access key |
+| `MessageBird__Originator` | real sends | sender name or phone number; defaults to `Vexcash` |
+| `MessageBird__UseMock` | yes | `true` for local/demo, `false` for MessageBird |
+| `PORT` | supplied by Railway | HTTP port; defaults to 8080 in Docker |
+
+Do not commit API keys. `.env` is ignored and `.env.example` contains names only.
+
+## Design notes
+
+The code is intentionally one deployable project with clear internal boundaries:
+
+```text
+HTTP / UI
+   ↓
+Controllers → SmsDispatchService → ISmsProvider → MessageBird REST API
+                  ↓
+            AppDbContext → PostgreSQL
+```
+
+- Domain objects protect their own basic invariants.
+- Controllers translate HTTP; they do not implement sending logic.
+- `ISmsProvider` keeps MessageBird replaceable and makes mock testing trivial.
+- Each message stores its resolved body, so later template changes cannot rewrite history.
+- Provider failures are persisted and returned as HTTP 502 with the internal message ID.
+
+## Tests
+
+With a local .NET 10 SDK:
+
+```bash
+dotnet test
+```
+
+Or with Docker:
+
+```bash
+docker run --rm \
+  -e DOTNET_CLI_HOME=/tmp/dotnet \
+  -e NUGET_PACKAGES=/tmp/nuget \
+  -v "$PWD:/work" -w /work \
+  mcr.microsoft.com/dotnet/sdk:10.0 \
+  dotnet test tests/Vexcash.Sms.Api.Tests/Vexcash.Sms.Api.Tests.csproj
+```

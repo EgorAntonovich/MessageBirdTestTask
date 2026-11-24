@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title>Vexcash Messages</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="#send" aria-label="Vexcash Messages home">
+        <span class="brand-mark">V</span>
+        <span>Vexcash<br><b>Messages</b></span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#send" data-route="send" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 4h16v12H7l-3 3V4Zm3 4h10M7 12h7"/></svg>Send message</a>
+        <a href="#templates" data-route="templates"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3h10v18H7zM10 8h4M10 12h4M10 16h3"/></svg>Templates</a>
+        <a href="#history" data-route="history"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 7v5l3 2M4.5 9A8 8 0 1 1 4 14M4 5v4h4"/></svg>History</a>
+      </nav>
+      <div class="sidebar-foot">
+        <span class="provider-dot" aria-hidden="true"></span>
+        <span><b id="provider-mode">Checking provider…</b><small id="provider-name">MessageBird</small></span>
+      </div>
+    </aside>
+
+    <main id="main" tabindex="-1">
+      <section class="view is-active" data-view="send" aria-labelledby="send-title">
+        <header class="page-header">
+          <div><h1 id="send-title">New dispatch</h1><p>Choose a customer and template, then review the exact SMS.</p></div>
+          <div class="header-actions">
+            <span class="mobile-provider" id="mobile-provider">Checking provider…</span>
+            <a class="docs-link" href="/swagger" target="_blank" rel="noopener">API documentation <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 16 16 8M10 8h6v6"/></svg></a>
+          </div>
+        </header>
+
+        <div class="composer">
+          <section class="customer-panel" aria-labelledby="details-title">
+            <h2 id="details-title">Message details</h2>
+            <label for="customer-select">Credit number</label>
+            <select id="customer-select"><option value="">Loading customers…</option></select>
+            <div class="customer-facts" id="customer-facts" aria-live="polite">
+              <div><span>Customer</span><strong>—</strong></div>
+              <div><span>Phone</span><strong>—</strong></div>
+              <div><span>Amount due</span><strong>—</strong></div>
+              <div><span>Due date</span><strong>—</strong></div>
+            </div>
+            <label for="template-select">Message template</label>
+            <select id="template-select"><option value="">Loading templates…</option></select>
+            <p class="field-help">Templates support {CreditNumber}, {Name}, {Amount}, and {DueDate}.</p>
+          </section>
+
+          <section class="preview-panel" aria-labelledby="preview-title">
+            <div class="preview-heading"><h2 id="preview-title">Message preview</h2><span id="character-count">0 characters</span></div>
+            <div class="message-paper" id="message-preview" aria-live="polite">Select a customer and template to generate the message.</div>
+            <div class="send-row">
+              <p id="send-note">The provider response will be saved to history.</p>
+              <button class="primary-button" id="send-button" disabled>
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 11 18-8-8 18-2-7-8-3Zm8 3 4-5"/></svg>
+                <span>Send message</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" data-view="templates" aria-labelledby="templates-title">
+        <header class="page-header"><div><h1 id="templates-title">Templates</h1><p>Keep the three operational message types clear and reusable.</p></div><button class="secondary-button" id="new-template">New template</button></header>
+        <div class="template-layout">
+          <div class="template-list" id="template-list" aria-label="Message templates"></div>
+          <form class="template-editor" id="template-form">
+            <input type="hidden" id="template-id">
+            <h2 id="template-form-title">Edit template</h2>
+            <label for="template-name">Name</label><input id="template-name" maxlength="120" required>
+            <label for="template-kind">Type</label>
+            <select id="template-kind"><option value="Reminder">Reminder</option><option value="PaymentDemand">Payment demand</option><option value="ContractTermination">Contract termination</option></select>
+            <label for="template-body">Message body</label><textarea id="template-body" rows="12" maxlength="2000" required></textarea>
+            <p class="field-help">Available placeholders: {CreditNumber}, {Name}, {Amount}, {DueDate}</p>
+            <div class="form-actions"><span id="template-status" role="status"></span><button class="primary-button" type="submit">Save template</button></div>
+          </form>
+        </div>
+      </section>
+
+      <section class="view" data-view="history" aria-labelledby="history-title">
+        <header class="page-header"><div><h1 id="history-title">Send history</h1><p>Every attempt and provider response, newest first.</p></div><button class="secondary-button" id="refresh-history">Refresh</button></header>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Sent</th><th scope="col">Customer</th><th scope="col">Template</th><th scope="col">Recipient</th><th scope="col">Status</th><th scope="col">Provider ID</th></tr></thead>
+            <tbody id="history-body"><tr><td colspan="6" class="empty-state">Loading history…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

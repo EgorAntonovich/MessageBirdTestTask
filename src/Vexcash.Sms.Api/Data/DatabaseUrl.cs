@@ -6,13 +6,17 @@ public static class DatabaseUrl
 {
     public static string Resolve(IConfiguration configuration)
     {
+        var databaseUrl = configuration["DATABASE_URL"];
+        if (!string.IsNullOrWhiteSpace(databaseUrl)) return FromUrl(databaseUrl);
+
         var connectionString = configuration.GetConnectionString("Postgres");
         if (!string.IsNullOrWhiteSpace(connectionString)) return connectionString;
 
-        var databaseUrl = configuration["DATABASE_URL"];
-        if (string.IsNullOrWhiteSpace(databaseUrl))
-            throw new InvalidOperationException("Configure ConnectionStrings:Postgres or DATABASE_URL.");
+        throw new InvalidOperationException("Configure DATABASE_URL or ConnectionStrings:Postgres.");
+    }
 
+    private static string FromUrl(string databaseUrl)
+    {
         var uri = new Uri(databaseUrl);
         var credentials = uri.UserInfo.Split(':', 2);
         return new NpgsqlConnectionStringBuilder

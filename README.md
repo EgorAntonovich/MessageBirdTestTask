@@ -71,13 +71,62 @@ The migration seeds three editable templates:
 - Payment demand
 - Contract termination
 
-Supported placeholders are `{CreditNumber}`, `{Name}`, `{Amount}`, and `{DueDate}`. Unknown placeholders are rejected when a template is created or updated.
+You can also create any number of custom templates. A custom template has its own name and body and belongs to one of the required operational types: Reminder, Payment demand, or Contract termination.
+
+### Create a custom template in the UI
+
+1. Open `/` and select **Templates** in the navigation.
+2. Click **Create custom template**.
+3. Enter a unique name.
+4. Select the operational type.
+5. Write the message body using any of the supported placeholders:
+   - `{CreditNumber}`
+   - `{Name}`
+   - `{Amount}`
+   - `{DueDate}`
+6. Click **Save template**.
+7. Return to **Send message**. The new template is immediately available in the template selector.
+
+Unknown placeholders are rejected when a template is created or updated.
+
+### Create a custom template through REST
+
+```bash
+curl -X POST http://localhost:8080/api/templates \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "Custom balance notice",
+    "kind": "Reminder",
+    "body": "Hello {Name}, credit {CreditNumber} has a balance of {Amount} due on {DueDate}."
+  }'
+```
 
 ## Railway deployment
 
-1. Push the repository to GitHub and create a Railway project from it.
-2. Add a Railway PostgreSQL service.
-3. In the application service, set these variables:
+The repository contains a root `Dockerfile` and `railway.json`, so Railway does not need custom build or start commands.
+
+### 1. Create the Railway project
+
+1. Sign in to Railway and click **New Project**.
+2. Choose **Deploy from GitHub repo**.
+3. Connect GitHub if Railway has not been authorized yet.
+4. Select `EgorAntonovich/MessageBirdTestTask`.
+5. Open the new application service, then go to **Settings → Source**.
+6. Select the branch you want Railway to deploy. For the current implementation use `feature/messagebird-sms-app`; after merging the pull request, change it to `main`.
+
+Railway detects the root `Dockerfile` automatically.
+
+### 2. Add PostgreSQL
+
+1. Return to the project canvas.
+2. Click **+ New**.
+3. Select **Database → PostgreSQL**.
+4. Wait until the PostgreSQL service is running.
+5. Keep the database private; the API can reach it through Railway's internal network.
+
+### 3. Configure application variables
+
+Open the application service—not the PostgreSQL service—and select **Variables**. Add:
 
 ```text
 DATABASE_URL=${{Postgres.DATABASE_URL}}
@@ -86,12 +135,54 @@ MessageBird__Originator=Vexcash
 MessageBird__UseMock=false
 ```
 
-4. Deploy. Railway uses `railway.json` and the root `Dockerfile`.
-5. Open `/health` first, then `/swagger` and `/`.
+If your database service has a different name, replace `Postgres` in `${{Postgres.DATABASE_URL}}` with that exact service name. Use Railway's reference-variable autocomplete instead of copying the database password manually.
 
-`Database.MigrateAsync()` runs on startup, so the schema is created or upgraded automatically. Keep only one replica during migrations for this test assignment. A production multi-replica system should run migrations as a separate release step.
+For the first deployment, it is safer to use:
 
-For a safe reviewer demo that must not send real SMS, set `MessageBird__UseMock=true` and omit the access key.
+```text
+MessageBird__UseMock=true
+```
+
+Mock mode exercises the complete UI, database, templates, history, and provider-response flow without sending a real SMS. Switch it to `false` only after the deployment has been verified.
+
+### 4. Deploy
+
+1. Review Railway's staged changes.
+2. Click **Deploy**.
+3. Open the deployment logs.
+4. Wait for the image build and the EF migration to complete.
+5. The deployment is healthy when the service remains running and `/health` returns `Healthy`.
+
+`Database.MigrateAsync()` runs on startup, so the schema and seed templates are created automatically. Keep one application replica during migrations for this test assignment. A larger production system should run migrations as a separate release step.
+
+### 5. Create a public URL
+
+1. Open the application service.
+2. Go to **Settings → Networking → Public Networking**.
+3. Click **Generate Domain**.
+4. Railway creates an HTTPS `*.up.railway.app` domain.
+
+Do not add public networking to PostgreSQL; only the web application needs a public domain.
+
+### 6. Verify the deployment
+
+Using the generated domain, open these paths in order:
+
+```text
+https://<your-domain>/health
+https://<your-domain>/swagger
+https://<your-domain>/
+```
+
+Then:
+
+1. Confirm the UI displays **Mock mode** or **Live provider ready**, matching your configuration.
+2. Open **Templates** and create a custom template.
+3. Return to **Send message** and preview it.
+4. In mock mode, send it and confirm that it appears in **History**.
+5. When ready for a real SMS, set `MessageBird__UseMock=false`, confirm the access key and originator, and redeploy.
+
+If the application service is connected to GitHub autodeploys, later pushes to the selected branch trigger a new build automatically.
 
 ## Configuration
 
